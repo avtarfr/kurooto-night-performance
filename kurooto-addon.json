@@ -1,0 +1,22 @@
+{
+  "name": "night-performance",
+  "title": "Night performance",
+  "description": "While Kurooto does its heavy night work (reading books into your notes, the nightly passes), switches this computer to its highest performance power mode, which also runs the fans harder, and back to exactly what it was when the work ends; /perf shows what it found and tests it.",
+  "version": "1.0.0",
+  "kurooto": ">=0.6.0",
+  "license": "Apache-2.0",
+  "features": ["night_performance"],
+  "commands": [{"name": "perf", "what": "what it found, the power mode now, and a test (switch and back)"}],
+  "jobs": [{"id": "night_performance:watch", "what": "looks every 2 minutes whether the night's work is going"}],
+  "tools": [],
+  "hosts": [],
+  "programs": [
+    {"name": "powerprofilesctl", "what": "switches the power profile (power-profiles-daemon, Linux)"},
+    {"name": "tuned-adm", "what": "switches the tuned profile (Linux)"},
+    {"name": "asusctl", "what": "switches the profile of an ASUS laptop (Linux)"},
+    {"name": "system76-power", "what": "only in the commands you enter yourself (System76 laptops)"},
+    {"name": "sudo", "what": "only with -n, never asking for a password: the Lenovo Legion and LOQ helper you install, and the commands you enter yourself"},
+    {"name": "powercfg", "what": "switches the power plan or power mode (Windows)"},
+    {"name": "pmset", "what": "reads whether Low Power Mode is on (macOS); changing it needs your own commands"}
+  ]
+}

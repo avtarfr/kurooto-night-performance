@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# kurooto-legion-night: the night mode of a Lenovo Legion or LOQ laptop on Linux (the legion_laptop driver from
+# LenovoLegionLinux), for Kurooto's Night performance add-on.
+#
+#   kurooto-legion-night on PROFILE FAN   remember the platform profile and the full-speed fan setting, then set the
+#                                         profile (custom or performance) and, with FAN "fan", the fans to full
+#                                         speed ("nofan" leaves the fans as they are)
+#   kurooto-legion-night off              put back exactly what "on" remembered (nothing, when it remembers nothing)
+#   kurooto-legion-night status           print the profile and the fan setting
+#
+# It runs as root through one sudo rule that allows only those lines (install.sh beside it), so it takes no other
+# arguments and reads no settings. What "on" remembers is kept in /run (gone at a reboot, when the firmware starts
+# from its own settings again).
+set -uo pipefail
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+
+ROOT=""
+if [ "$(id -u)" -ne 0 ] && [ -n "${KUROOTO_LEGION_TEST_ROOT:-}" ]; then
+  ROOT=$KUROOTO_LEGION_TEST_ROOT  # tests only (a pretend /sys and /run); never as root, and sudo drops it anyway
+fi
+DRIVER=$ROOT/sys/bus/platform/drivers/legion
+PROFILE=$ROOT/sys/firmware/acpi/platform_profile
+CHOICES=$ROOT/sys/firmware/acpi/platform_profile_choices
+STATE=$ROOT/run/kurooto-legion-night.state
+FAN=""
+for f in "$DRIVER"/*/fan_fullspeed; do
+  if [ -e "$f" ]; then FAN=$f; break; fi
+done
+
+say() { echo "kurooto-legion-night: $*" >&2; }
+has_choice() { grep -qw -- "$1" "$CHOICES" 2>/dev/null; }
+status() {
+  local fan=none
+  [ -n "$FAN" ] && fan=$(cat "$FAN")
+  echo "profile $(cat "$PROFILE"), max fan $fan$([ -f "$STATE" ] && echo ", night mode on")"
+}
+
+[ -d "$DRIVER" ] || { say "this computer has no legion_laptop driver (LenovoLegionLinux)"; exit 2; }
+[ -r "$PROFILE" ] || { say "this computer has no platform profile ($PROFILE)"; exit 2; }
+
+case "$#:${1:-} ${2:-} ${3:-}" in  # exactly these lines, nothing more
+  "3:on custom fan" | "3:on custom nofan" | "3:on performance fan" | "3:on performance nofan")
+    [ -w "$PROFILE" ] || { say "needs root (run it through sudo -n, as install.sh set up)"; exit 3; }
+    want=$2
+    if ! has_choice "$want"; then
+      if [ "$want" = custom ] && has_choice performance; then
+        want=performance  # no custom profile on this model: performance is the next best
+      else
+        say "this laptop has no $want profile (it has: $(cat "$CHOICES" 2>/dev/null))"
+        exit 4
+      fi
+    fi
+    if [ ! -f "$STATE" ]; then  # keep the first "before": a second "on" doesn't overwrite it
+      fan_before=-
+      [ -n "$FAN" ] && fan_before=$(cat "$FAN")
+      mkdir -p "$(dirname "$STATE")" && printf '%s %s\n' "$(cat "$PROFILE")" "$fan_before" > "$STATE" || exit 1
+    fi
+    echo "$want" > "$PROFILE" || exit 1
+    if [ "$3" = fan ]; then
+      if [ -n "$FAN" ] && [ -w "$FAN" ]; then
+        echo 1 > "$FAN" || exit 1
+      else
+        say "no full-speed fan switch on this laptop: only the profile was set"
+      fi
+    fi
+    ;;
+  "1:off  ")
+    if [ -f "$STATE" ]; then
+      read -r prof fan < "$STATE"
+      case "$prof" in low-power | quiet | cool | balanced | balanced-performance | performance | custom)
+        has_choice "$prof" && echo "$prof" > "$PROFILE" ;;
+      esac
+      case "$fan" in 0 | 1) [ -n "$FAN" ] && echo "$fan" > "$FAN" ;; esac
+      rm -f "$STATE"
+    fi
+    ;;
+  "1:status  ") ;;
+  *)
+    say "usage: kurooto-legion-night on custom|performance fan|nofan, off, status"
+    exit 2
+    ;;
+esac
+status
