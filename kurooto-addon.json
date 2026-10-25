@@ -2,7 +2,7 @@
   "name": "night-performance",
   "title": "Night performance",
   "description": "While Kurooto does its heavy night work (reading books into your notes, the nightly passes), switches this computer to its highest performance power mode, which also runs the fans harder, and back to exactly what it was when the work ends; /perf shows what it found and tests it.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kurooto": ">=0.6.0",
   "license": "Apache-2.0",
   "features": ["night_performance"],

@@ -154,6 +154,17 @@ def test_the_night_switches_while_the_work_runs_and_not_after(night):
     assert night.state("ppd") == "balanced"
 
 
+def test_hold_window_stays_on_while_you_use_the_computer_and_between_work(night):
+    with_ppd(night, "balanced")
+    night.m.app.settings.set("night_performance.hold_window", True)
+    night.busy, night.away = False, False  # no work, and you're at the computer
+    night.m.tick()
+    assert night.state("ppd") == "performance"
+    night.ac = False  # but the charger coming out still puts it back
+    night.m.tick()
+    assert night.state("ppd") == "balanced"
+
+
 def test_a_mode_you_changed_meanwhile_is_left_alone(night):
     with_ppd(night, "balanced")
     night.busy = True

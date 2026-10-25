@@ -147,6 +147,7 @@ is installed, power-profiles-daemon (if you have it) does the profile alone.
 | `night_performance.on_command` | empty | your own command that switches to the performance mode |
 | `night_performance.off_command` | empty | your own command that puts the mode back |
 | `night_performance.check_command` | empty | your own command that prints the mode now (for `/perf`) |
+| `night_performance.hold_window` | off | on: stays switched for the whole reading window while on the charger, whether you're at the computer or not and between pieces of work; back when the window ends or the charger comes out |
 | `night_performance.away_min` | 10 | switch only after this many minutes without input (or with the screen locked) |
 | `night_performance.settle_min` | 10 | minutes without night work before it switches back |
 | `night_performance.legion_profile` | `custom` | Legion and LOQ with the helper: `custom` or `performance` |

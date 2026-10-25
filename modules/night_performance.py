@@ -48,6 +48,8 @@ register_defaults(
         "on_command": "",  # your own command that switches to the performance mode (one program, no shell)
         "off_command": "",  # your own command that puts the mode back as it was (it has to remember it itself)
         "check_command": "",  # optional: your own command that prints the mode now (shown by /perf)
+        "hold_window": False,  # True: stay switched for the whole reading window on the charger, whether or not you're
+        # at the computer and between pieces of work (back only when the window ends or the charger is out)
         "away_min": 10,  # switch only after this many minutes without keyboard or mouse input (or a locked screen)
         "settle_min": 10,  # minutes without night work before it switches back
         "legion_profile": "custom",  # Lenovo Legion and LOQ with the helper: "custom" or "performance"
@@ -500,6 +502,9 @@ class NightPerformance(Module):
         start, end = self.window()
         if not start <= dt.datetime.now() < end:
             return False, "outside tonight's reading window"
+        if self.setting("hold_window"):
+            self.busy()
+            return True, "held for the whole reading window (night_performance.hold_window)"
         if self.present():
             return False, "you're using the computer"
         if self.busy():
